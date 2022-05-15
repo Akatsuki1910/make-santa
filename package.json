@@ -1,0 +1,22 @@
+{
+  "name": "make-santa",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "parcel ./src/index.html",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "pixi.js": "^6.3.2"
+  },
+  "devDependencies": {
+    "@parcel/config-default": "^2.5.0",
+    "@parcel/resolver-glob": "^2.5.0",
+    "@parcel/transformer-svg": "^2.5.0",
+    "parcel": "^2.5.0",
+    "querystring-es3": "^0.2.1"
+  }
+}
