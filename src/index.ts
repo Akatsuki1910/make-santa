@@ -32,11 +32,27 @@ window.onresize = () => {
   buttonSetup()
 }
 
+// 0 title
+// 1 game
+// 2 end
+let gameFlg = 0
+
 let settings = {}
+let w = width / 915
+let h = height / 958
 function setSettings(width: number, height: number) {
-  const w = width / 915
-  const h = height / 958
+  w = width / 915
+  h = height / 958
   settings = {
+    snow: {
+      scale: 0.1,
+    },
+    yes_clothes: {
+      scale: 0.2,
+    },
+    not_clothes: {
+      scale: 0.2,
+    },
     title_1: {
       scale: 1,
       x: width / 2,
@@ -93,11 +109,9 @@ for (const s in svg2) {
 
 // snow
 const snowG = new Container()
-stage.addChild(snowG)
 function createSnow() {
   const s = new PIXI.Sprite(texture['snow'])
   snowG.addChild(s)
-  s.scale.set(0.1)
   s.y = -50
   s.x = Math.random() * width
 }
@@ -120,26 +134,44 @@ for (const t of titleS) {
 }
 titleSp['button_start'].interactive = true
 titleSp['button_start'].on('click', () => {
-  stage.removeChild(titleG)
-  stage.removeChild(snowG)
-  // window.alert('start')
-  stage.addChild(buttonG)
+  removeG(titleGs)
+  gameFlg = 1
+  startTime = Date.now()
+  addG(gameGs)
 })
 
 function titleSetup() {
   for (const i of titleS) {
     titleSp[i].anchor.set(0.5, 0.5)
-    titleSp[i].scale.set(height / 958)
+    titleSp[i].scale.set(h)
     titleSp[i].x = settings[i]?.x
     titleSp[i].y = settings[i]?.y
   }
 }
 titleSetup()
-stage.addChild(titleG)
 // title
 
 // santa
 // santa
+
+// clothes
+const clothesG = new Container()
+function createClothes() {
+  const s = new PIXI.Sprite(
+    texture[Math.random() > 0.2 ? 'yes_clothes' : 'not_clothes'],
+  )
+  clothesG.addChild(s)
+  s.y = -50
+  s.x = Math.random() * width
+}
+
+function moveClothes() {
+  for (const o of clothesG.children) {
+    o.y += 3
+    if (o.y > height) clothesG.removeChild(o)
+  }
+}
+// clothes
 
 // move button
 const buttonG = new Container()
@@ -155,34 +187,64 @@ for (const t of buttonS) {
 function buttonSetup() {
   for (const i of buttonS) {
     buttonSp[i].anchor.set(0.5, 0.5)
-    buttonSp[i].scale.set((height / 958) * (width / 915))
+    buttonSp[i].scale.set(h * w)
     buttonSp[i].x = settings[i]?.x
     buttonSp[i].y = settings[i]?.y
   }
 }
 buttonSetup()
-// stage.addChild(buttonG)
 // move button
 
 // back
 const back = new PIXI.Sprite(texture['button_back'])
 back.anchor.set(0.5, 0.5)
-back.scale.set((height / 958) * (width / 915))
+back.scale.set(h)
 back.x = settings['button_back']?.x
 back.y = settings['button_back']?.y
 back.interactive = true
 back.on(clickEventType, () => {
-  stage.removeChild(back)
-  window.alert('back')
-  stage.addChild(snowG)
-  stage.addChild(titleG)
+  removeG(endGs)
+  gameFlg = 0
+  addG(titleGs)
 })
 // back
 
+const titleGs = [snowG, titleG]
+const gameGs = [clothesG, buttonG]
+const endGs = [back]
+
+function addG(gs: PIXI.Container[]) {
+  for (const g of gs) {
+    stage.addChild(g)
+  }
+}
+
+function removeG(gs: PIXI.Container[]) {
+  for (const g of gs) {
+    stage.removeChild(g)
+  }
+}
+
+addG(titleGs)
+let startTime
 function animation() {
   renderer.render(stage)
-  if (Math.random() < 0.1) createSnow()
-  moveSnow()
+
+  if (Math.random() < 0.05 * w) {
+    if (gameFlg === 0) createSnow()
+    if (gameFlg === 1) createClothes()
+  }
+  if (gameFlg === 0) moveSnow()
+  if (gameFlg === 1) moveClothes()
+
+  if (gameFlg === 1) {
+    let t = 40 - Math.floor((Date.now() - startTime) / 1000)
+    if (t === 0) {
+      removeG(gameGs)
+      gameFlg = 2
+      addG(endGs)
+    }
+  }
   requestAnimationFrame(animation)
 }
 animation()
