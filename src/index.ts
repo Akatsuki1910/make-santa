@@ -10,6 +10,8 @@ const view = document.getElementById('canvas') as HTMLCanvasElement
 let width = window.innerWidth
 let height = window.innerHeight
 
+const clickEventType = window.ontouchstart !== null ? 'click' : 'touchend'
+
 const stage = new PIXI.Container()
 const renderer = PIXI.autoDetectRenderer({
   width,
@@ -27,11 +29,13 @@ window.onresize = () => {
   renderer.resize(width, height)
   setSettings(width, height)
   titleSetup()
+  buttonSetup()
 }
 
 let settings = {}
 function setSettings(width: number, height: number) {
-  const h = height / 915
+  const w = width / 915
+  const h = height / 958
   settings = {
     title_1: {
       scale: 1,
@@ -48,6 +52,21 @@ function setSettings(width: number, height: number) {
       x: width / 2,
       y: 850 * h,
     },
+    button_back: {
+      scale: 0.8,
+      x: width / 2,
+      y: 850 * h,
+    },
+    button_right: {
+      scale: 0.8,
+      x: 800 * w,
+      y: height - 150 * h,
+    },
+    button_left: {
+      scale: 0.8,
+      x: 115 * w,
+      y: height - 150 * h,
+    },
   }
 }
 setSettings(width, height)
@@ -55,7 +74,9 @@ setSettings(width, height)
 for (const s in svg) {
   texture[s] = new PIXI.Texture(
     new PIXI.BaseTexture(
-      new PIXI.SVGResource(svg[s], { scale: settings[s]?.scale || 1 }),
+      new PIXI.resources.SVGResource(svg[s], {
+        scale: settings[s]?.scale || 1,
+      }),
     ),
   )
 }
@@ -63,7 +84,9 @@ for (const s in svg) {
 for (const s in svg2) {
   texture[s] = new PIXI.Texture(
     new PIXI.BaseTexture(
-      new PIXI.SVGResource(svg2[s], { scale: settings[s]?.scale || 1 }),
+      new PIXI.resources.SVGResource(svg2[s], {
+        scale: settings[s]?.scale || 1,
+      }),
     ),
   )
 }
@@ -82,6 +105,7 @@ function createSnow() {
 function moveSnow() {
   for (const o of snowG.children) {
     o.y += 2
+    if (o.y > height) snowG.removeChild(o)
   }
 }
 // snow
@@ -89,7 +113,7 @@ function moveSnow() {
 // title
 const titleG = new Container()
 const titleS = ['title_1', 'start', 'button_start']
-const titleSp = {}
+const titleSp: { [key: string]: PIXI.Sprite } = {}
 for (const t of titleS) {
   titleSp[t] = new PIXI.Sprite(texture[t])
   titleG.addChild(titleSp[t])
@@ -97,7 +121,9 @@ for (const t of titleS) {
 titleSp['button_start'].interactive = true
 titleSp['button_start'].on('click', () => {
   stage.removeChild(titleG)
-  window.alert('start')
+  stage.removeChild(snowG)
+  // window.alert('start')
+  stage.addChild(buttonG)
 })
 
 function titleSetup() {
@@ -110,8 +136,48 @@ function titleSetup() {
 }
 titleSetup()
 stage.addChild(titleG)
-// stage.removeChild(titleG)
 // title
+
+// santa
+// santa
+
+// move button
+const buttonG = new Container()
+const buttonS = ['button_right', 'button_left']
+const buttonSp: { [key: string]: PIXI.Sprite } = {}
+for (const t of buttonS) {
+  buttonSp[t] = new PIXI.Sprite(texture[t])
+  buttonG.addChild(buttonSp[t])
+  buttonSp[t].interactive = true
+  buttonSp[t].on('click', () => {})
+}
+
+function buttonSetup() {
+  for (const i of buttonS) {
+    buttonSp[i].anchor.set(0.5, 0.5)
+    buttonSp[i].scale.set((height / 958) * (width / 915))
+    buttonSp[i].x = settings[i]?.x
+    buttonSp[i].y = settings[i]?.y
+  }
+}
+buttonSetup()
+// stage.addChild(buttonG)
+// move button
+
+// back
+const back = new PIXI.Sprite(texture['button_back'])
+back.anchor.set(0.5, 0.5)
+back.scale.set((height / 958) * (width / 915))
+back.x = settings['button_back']?.x
+back.y = settings['button_back']?.y
+back.interactive = true
+back.on(clickEventType, () => {
+  stage.removeChild(back)
+  window.alert('back')
+  stage.addChild(snowG)
+  stage.addChild(titleG)
+})
+// back
 
 function animation() {
   renderer.render(stage)
