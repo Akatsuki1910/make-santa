@@ -3,6 +3,7 @@ import { Container } from 'pixi.js'
 
 import svg from './svg/*.svg'
 import svg2 from './svg/svg/*.svg'
+// import digits from './img/digits.png'
 
 const texture: { [key: string]: PIXI.Texture } = {}
 
@@ -10,7 +11,10 @@ const view = document.getElementById('canvas') as HTMLCanvasElement
 let width = window.innerWidth
 let height = window.innerHeight
 
+let onClick = false
 const clickEventType = window.ontouchstart !== null ? 'click' : 'touchend'
+const startEventType = window.ontouchstart !== null ? 'mousedown' : 'touchstart'
+const endEventType = window.ontouchstart !== null ? 'mouseup' : 'touchend'
 
 const stage = new PIXI.Container()
 const renderer = PIXI.autoDetectRenderer({
@@ -30,12 +34,15 @@ window.onresize = () => {
   setSettings(width, height)
   titleSetup()
   buttonSetup()
+  roundBox.x = width / 2
+  text.x = width / 2
 }
 
 // 0 title
 // 1 game
 // 2 end
 let gameFlg = 0
+let lv = 1
 
 let settings = {}
 let w = width / 915
@@ -91,7 +98,7 @@ for (const s in svg) {
   texture[s] = new PIXI.Texture(
     new PIXI.BaseTexture(
       new PIXI.resources.SVGResource(svg[s], {
-        scale: settings[s]?.scale || 1,
+        scale: settings[s]?.scale || 0.3,
       }),
     ),
   )
@@ -101,11 +108,39 @@ for (const s in svg2) {
   texture[s] = new PIXI.Texture(
     new PIXI.BaseTexture(
       new PIXI.resources.SVGResource(svg2[s], {
-        scale: settings[s]?.scale || 1,
+        scale: settings[s]?.scale || 0.3,
       }),
     ),
   )
 }
+
+// const te = new PIXI.Texture(
+//   new PIXI.BaseTexture(String(digits)),
+//   new PIXI.Rectangle(0, 0, 100, 100),
+// )
+// console.log(te)
+// const sp = new PIXI.Sprite(te)
+// stage.addChild(sp)
+
+const roundBox = new PIXI.Graphics()
+roundBox.beginFill(0xffffff)
+roundBox.drawRoundedRect(0, 0, 450, 100, 10)
+roundBox.endFill()
+roundBox.pivot.set(225, 50)
+roundBox.x = width / 2
+roundBox.y = 190
+const textStyle = new PIXI.TextStyle({
+  fill: 'black',
+  fontSize: 100,
+  fontFamily: 'Courier New',
+})
+const text = new PIXI.Text('00.00', textStyle)
+text.anchor.set(0.5, 0.5)
+text.x = width / 2
+text.y = 190 / 2 + 100
+const timer = new PIXI.Container()
+timer.addChild(roundBox)
+timer.addChild(text)
 
 // snow
 const snowG = new Container()
@@ -133,7 +168,7 @@ for (const t of titleS) {
   titleG.addChild(titleSp[t])
 }
 titleSp['button_start'].interactive = true
-titleSp['button_start'].on('click', () => {
+titleSp['button_start'].on(clickEventType, () => {
   removeG(titleGs)
   gameFlg = 1
   startTime = Date.now()
@@ -152,6 +187,46 @@ titleSetup()
 // title
 
 // santa
+const santaG = new PIXI.Sprite()
+const santaS: PIXI.Texture[] = []
+for (const f of ['left', 'right']) {
+  for (const s of ['stand', 'run']) {
+    for (const n of ['one', 'two', 'three', 'four', 'five']) {
+      const tex = texture[`santa_${f}_${s}_${n}`]
+      santaS.push(tex)
+    }
+  }
+}
+
+santaG.texture = santaS[0]
+santaG.anchor.set(0.5, 0.5)
+santaG.x = width / 2
+santaG.y = height - 300
+
+let memSanta = 0
+function changeSanta(i: number) {
+  if (i === -1) i = onClick ? memSanta - 5 : memSanta
+  if (memSanta !== i) {
+    santaG.texture = santaS[i]
+    memSanta = i
+  }
+}
+
+function moveSanta() {
+  if (Math.floor(memSanta / 5) % 2 === 1) {
+    if (Math.floor(memSanta / 10) === 0) {
+      santaG.x -= 2
+      if (santaG.x < 0) {
+        santaG.x = 0
+      }
+    } else {
+      santaG.x += 2
+      if (santaG.x > width) {
+        santaG.x = width
+      }
+    }
+  }
+}
 // santa
 
 // clothes
@@ -175,13 +250,26 @@ function moveClothes() {
 
 // move button
 const buttonG = new Container()
-const buttonS = ['button_right', 'button_left']
+const buttonS = ['button_left', 'button_right']
 const buttonSp: { [key: string]: PIXI.Sprite } = {}
-for (const t of buttonS) {
+for (const i in buttonS) {
+  const t = buttonS[i]
   buttonSp[t] = new PIXI.Sprite(texture[t])
   buttonG.addChild(buttonSp[t])
   buttonSp[t].interactive = true
-  buttonSp[t].on('click', () => {})
+  buttonSp[t].on(startEventType, () => bStart(+i * 10 + 5))
+  buttonSp[t].on(endEventType, () => bEnd(+i * 10))
+}
+window.addEventListener(endEventType, () => bEnd(-1))
+
+function bStart(i: number) {
+  changeSanta(i)
+  onClick = true
+}
+
+function bEnd(i: number) {
+  changeSanta(i)
+  onClick = false
 }
 
 function buttonSetup() {
@@ -210,7 +298,7 @@ back.on(clickEventType, () => {
 // back
 
 const titleGs = [snowG, titleG]
-const gameGs = [clothesG, buttonG]
+const gameGs = [timer, clothesG, buttonG, santaG]
 const endGs = [back]
 
 function addG(gs: PIXI.Container[]) {
@@ -226,9 +314,11 @@ function removeG(gs: PIXI.Container[]) {
 }
 
 addG(titleGs)
-let startTime
+let startTime: number
 function animation() {
   renderer.render(stage)
+
+  if (onClick) moveSanta()
 
   if (Math.random() < 0.05 * w) {
     if (gameFlg === 0) createSnow()
@@ -238,8 +328,10 @@ function animation() {
   if (gameFlg === 1) moveClothes()
 
   if (gameFlg === 1) {
-    let t = 40 - Math.floor((Date.now() - startTime) / 1000)
-    if (t === 0) {
+    let t = 40 - (Date.now() - startTime) / 1000
+    text.text = ('0' + String(t.toFixed(2))).slice(-5)
+    if (t < 0) {
+      text.text = '00.00'
       removeG(gameGs)
       gameFlg = 2
       addG(endGs)
