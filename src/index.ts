@@ -3,7 +3,6 @@ import { Container } from 'pixi.js'
 
 import svg from './svg/*.svg'
 import svg2 from './svg/svg/*.svg'
-// import digits from './img/digits.png'
 
 const texture: { [key: string]: PIXI.Texture } = {}
 
@@ -42,6 +41,7 @@ window.onresize = () => {
 // 1 game
 // 2 end
 let gameFlg = 0
+let score = 0
 let lv = 1
 
 let settings = {}
@@ -51,14 +51,29 @@ function setSettings(width: number, height: number) {
   w = width / 915
   h = height / 958
   settings = {
-    snow: {
-      scale: 0.1,
+    result_one: {
+      scale: 0.9,
+    },
+    result_two: {
+      scale: 0.9,
+    },
+    result_three: {
+      scale: 0.9,
+    },
+    result_four: {
+      scale: 0.9,
+    },
+    result_five: {
+      scale: 0.9,
     },
     yes_clothes: {
       scale: 0.2,
     },
     not_clothes: {
       scale: 0.2,
+    },
+    snow: {
+      scale: 0.1,
     },
     title_1: {
       scale: 1,
@@ -199,6 +214,7 @@ for (const f of ['left', 'right']) {
 }
 
 santaG.texture = santaS[0]
+santaG.interactive = true
 santaG.anchor.set(0.5, 0.5)
 santaG.x = width / 2
 santaG.y = height - 300
@@ -206,6 +222,7 @@ santaG.y = height - 300
 let memSanta = 0
 function changeSanta(i: number) {
   if (i === -1) i = onClick ? memSanta - 5 : memSanta
+  else i += lv - 1
   if (memSanta !== i) {
     santaG.texture = santaS[i]
     memSanta = i
@@ -215,18 +232,19 @@ function changeSanta(i: number) {
 function moveSanta() {
   if (Math.floor(memSanta / 5) % 2 === 1) {
     if (Math.floor(memSanta / 10) === 0) {
-      santaG.x -= 2
+      santaG.x -= 3
       if (santaG.x < 0) {
         santaG.x = 0
       }
     } else {
-      santaG.x += 2
+      santaG.x += 3
       if (santaG.x > width) {
         santaG.x = width
       }
     }
   }
 }
+
 // santa
 
 // clothes
@@ -235,9 +253,10 @@ function createClothes() {
   const s = new PIXI.Sprite(
     texture[Math.random() > 0.2 ? 'yes_clothes' : 'not_clothes'],
   )
+  s.interactive = true
   clothesG.addChild(s)
   s.y = -50
-  s.x = Math.random() * width
+  s.x = Math.random() * (width - 40)
 }
 
 function moveClothes() {
@@ -297,9 +316,26 @@ back.on(clickEventType, () => {
 })
 // back
 
+// result
+const resultG = new PIXI.Sprite()
+resultG.anchor.set(0.5, 0.5)
+resultG.x = width / 2
+resultG.y = height / 2 - 50
+resultG.scale.set(h)
+function resultTex() {
+  let num: string
+  if (lv === 1) num = 'one'
+  if (lv === 2) num = 'two'
+  if (lv === 3) num = 'three'
+  if (lv === 4) num = 'four'
+  if (lv === 5) num = 'five'
+  resultG.texture = texture[`result_${num}`]
+}
+// result
+
 const titleGs = [snowG, titleG]
 const gameGs = [timer, clothesG, buttonG, santaG]
-const endGs = [back]
+const endGs = [back, resultG]
 
 function addG(gs: PIXI.Container[]) {
   for (const g of gs) {
@@ -318,9 +354,27 @@ let startTime: number
 function animation() {
   renderer.render(stage)
 
+  if (gameFlg === 1) {
+    const f = renderer.plugins.interaction.hitTest(santaG, clothesG)
+    if (f) {
+      const svgText = f.texture.baseTexture.resource.svg
+      if (svgText.match(/yes/)) {
+        score++
+        if (10 < score) lv = 2
+        if (25 < score) lv = 3
+        if (35 < score) lv = 4
+        if (50 < score) lv = 5
+        clothesG.removeChild(f)
+      } else {
+        startTime -= 2000
+        clothesG.removeChild(f)
+      }
+    }
+  }
+
   if (onClick) moveSanta()
 
-  if (Math.random() < 0.05 * w) {
+  if (Math.random() < 0.1 * w) {
     if (gameFlg === 0) createSnow()
     if (gameFlg === 1) createClothes()
   }
@@ -334,6 +388,7 @@ function animation() {
       text.text = '00.00'
       removeG(gameGs)
       gameFlg = 2
+      resultTex()
       addG(endGs)
     }
   }
