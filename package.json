@@ -2,9 +2,10 @@
   "name": "make-santa",
   "version": "1.0.0",
   "description": "",
+  "source": "src/index.html",
   "scripts": {
     "start": "parcel",
-    "build": "parcel build ./src/index.html --no-content-hash --no-source-maps --no-cache",
+    "build": "parcel build --no-source-maps",
     "dev": "parcel ./src/index.html",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
