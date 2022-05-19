@@ -294,7 +294,7 @@ function bEnd(i: number) {
 function buttonSetup() {
   for (const i of buttonS) {
     buttonSp[i].anchor.set(0.5, 0.5)
-    buttonSp[i].scale.set(h * w)
+    buttonSp[i].scale.set(Math.min(h * w, 1))
     buttonSp[i].x = settings[i]?.x
     buttonSp[i].y = settings[i]?.y
   }
