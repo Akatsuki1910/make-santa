@@ -34,7 +34,11 @@ window.onresize = () => {
   titleSetup()
   buttonSetup()
   roundBox.x = width / 2
+  back.x = width / 2
   text.x = width / 2
+  resultG.x = width / 2
+  tb.x = width / 2
+  twitter.x = width / 2
 }
 
 // 0 title
@@ -190,6 +194,10 @@ titleSp['button_start'].on(clickEventType, () => {
   removeG(titleGs)
   gameFlg = 1
   startTime = Date.now()
+  santaSetup()
+  score = 0
+  lv = 1
+  clothesG.removeChildren()
   addG(gameGs)
 })
 
@@ -216,11 +224,14 @@ for (const f of ['left', 'right']) {
   }
 }
 
-santaG.texture = santaS[0]
-santaG.interactive = true
-santaG.anchor.set(0.5, 0.5)
-santaG.x = width / 2
-santaG.y = height - 300
+function santaSetup() {
+  santaG.texture = santaS[0]
+  santaG.interactive = true
+  santaG.anchor.set(0.5, 0.5)
+  santaG.x = width / 2
+  santaG.y = height - 300
+}
+santaSetup()
 
 let memSanta = 0
 function changeSanta(i: number) {
@@ -359,13 +370,13 @@ tb.drawRoundedRect(0, 0, 100, 100, 10)
 tb.endFill()
 tb.pivot.set(tb.width / 2, tb.height / 2)
 tb.x = width / 2
-tb.y = height - 250
+tb.y = height / 2 + 200 * h
 twitterG.addChild(tb)
 
 const twitter = new PIXI.Sprite(texture['twitter_brands'])
 twitter.anchor.set(0.5, 0.5)
 twitter.x = width / 2
-twitter.y = height / 2 + 210
+twitter.y = height / 2 + 200 * h
 twitter.scale.set(h)
 twitterG.addChild(twitter)
 twitterG.interactive = true
