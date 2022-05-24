@@ -52,19 +52,22 @@ function setSettings(width: number, height: number) {
   h = height / 958
   settings = {
     result_one: {
-      scale: 0.9,
+      scale: 0.8,
     },
     result_two: {
-      scale: 0.9,
+      scale: 0.8,
     },
     result_three: {
-      scale: 0.9,
+      scale: 0.8,
     },
     result_four: {
-      scale: 0.9,
+      scale: 0.8,
     },
     result_five: {
-      scale: 0.9,
+      scale: 0.8,
+    },
+    twitter_brands: {
+      scale: 0.1,
     },
     yes_clothes: {
       scale: 0.2,
@@ -268,7 +271,7 @@ function moveClothes() {
 // clothes
 
 // move button
-const buttonG = new Container()
+const buttonG = new PIXI.Container()
 const buttonS = ['button_left', 'button_right']
 const buttonSp: { [key: string]: PIXI.Sprite } = {}
 for (const i in buttonS) {
@@ -279,6 +282,21 @@ for (const i in buttonS) {
   buttonSp[t].on(startEventType, () => bStart(+i * 10 + 5))
   buttonSp[t].on(endEventType, () => bEnd(+i * 10))
 }
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowLeft') {
+    bStart(0 * 10 + 5)
+  } else if (e.key === 'ArrowRight') {
+    bStart(1 * 10 + 5)
+  }
+})
+
+window.addEventListener('keyup', (e) => {
+  if (e.key === 'ArrowLeft') {
+    bStart(0 * 10)
+  } else if (e.key === 'ArrowRight') {
+    bStart(1 * 10)
+  }
+})
 window.addEventListener(endEventType, () => bEnd(-1))
 
 function bStart(i: number) {
@@ -320,7 +338,7 @@ back.on(clickEventType, () => {
 const resultG = new PIXI.Sprite()
 resultG.anchor.set(0.5, 0.5)
 resultG.x = width / 2
-resultG.y = height / 2 - 50
+resultG.y = height / 2 - 150
 resultG.scale.set(h)
 function resultTex() {
   let num: string
@@ -333,9 +351,33 @@ function resultTex() {
 }
 // result
 
+// twitter
+const twitterG = new Container()
+const tb = new PIXI.Graphics()
+tb.beginFill(0x1da1f2)
+tb.drawRoundedRect(0, 0, 100, 100, 10)
+tb.endFill()
+tb.pivot.set(tb.width / 2, tb.height / 2)
+tb.x = width / 2
+tb.y = height - 250
+twitterG.addChild(tb)
+
+const twitter = new PIXI.Sprite(texture['twitter_brands'])
+twitter.anchor.set(0.5, 0.5)
+twitter.x = width / 2
+twitter.y = height / 2 + 210
+twitter.scale.set(h)
+twitterG.addChild(twitter)
+twitterG.interactive = true
+twitterG.on(clickEventType, () => {
+  const url = `http://twitter.com/share?text=%23MAKE_SANTA%0a私は${score}ポイントでした！&url=https://make-santa.aktk1910.pw`
+  window.open(url)
+})
+// twitter
+
 const titleGs = [snowG, titleG]
 const gameGs = [timer, clothesG, buttonG, santaG]
-const endGs = [back, resultG]
+const endGs = [back, resultG, twitterG]
 
 function addG(gs: PIXI.Container[]) {
   for (const g of gs) {
